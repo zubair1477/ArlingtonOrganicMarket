@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+</head>
+<body>
+<h2>Product Management</h2>
+
+<h3>Add Product</h3>
+<input type="text" id="name" placeholder="Product Name">
+<input type="text" id="price" placeholder="Price">
+<input type="number" id="quantity" placeholder="Quantity">
+<button onclick="addProduct()">Add Product</button>
+
+<h3>Products List</h3>
+<ul id="productList"></ul>
+
+<script>
+    function fetchProducts()
+    {
+        fetch('/prooducts')
+            .then(response => response.json())
+            .then(data => {
+                let productList = document.getElementById('productList');
+                productList.innerHTML = '';
+                data.forEach(product => {
+                    let li = document.createElement('li');
+                    li.innerHTML = `${product.name} - $${product.price} - Quantity: ${product.quantity}
+                        <button onclick="deleteProduct(${product.id})">Delete</button>`;
+                    productList.appendChild(li);
+                });
+            });
+    }
+
+    function addProduct()
+    {
+        let name = document.getElementById('name').value;
+        let price = document.getElementById('price').value;
+        let quantity = document.getElementById('quantity').value;
+
+        fetch('/prodcuts', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name,price,quantity})
+        }).then(() => fetchProducts());
+    }
+
+    function deleteProduct(id)
+    {
+        fetch(`/prodcuts/${id}`, {method: 'Delete'})
+            .then(() => fetchProducts());
+    }
+
+    fetchProducts();
+
+</script>
+</body>
+</html>
