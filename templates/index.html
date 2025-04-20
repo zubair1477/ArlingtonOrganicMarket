@@ -3,24 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Management</title>
+    <title style="text-align:center;">Arlington Organic Market</title>
 </head>
 <body>
-<h2>Product Management</h2>
+<h2>Arlington Organic Market</h2>
 
-<h3>Add Product</h3>
-<input type="text" id="name" placeholder="Product Name">
-<input type="text" id="price" placeholder="Price">
-<input type="number" id="quantity" placeholder="Quantity">
-<button onclick="addProduct()">Add Product</button>
+<h3>Inventory Management</h3>
+<label>Vendor Information</label><br>
+<input type="number" id="vId" placeholder="Vendor Id">
+<input type="text" id="Vname" placeholder="Vendor Name">
+<input type="text" id="Street" placeholder="Street">
+<input type="text" id="City"   placeholder="City">
+<input type="text" id="StateAb" placeholder="State">
+<input type="text" id="ZipCode" placeholder="Zip Code">
+<br>
+
+<br>
+<label>Item Information</label>
+<br>
+<input type="number" id="iId" placeholder="Item Id">
+<input type="text"   id="Iname" placeholder="Item Name">
+<input type="number" id="Sprice" placeholder="Selling Price">
+<input type="text"   id="Category" placeholder="Category">
+<br>
+
+<br>
+<label>Store Inventory</label>
+<br>
+<input type="number" id="storeId" placeholder="Store Id">
+<input type="number" id="iId_store" placeholder="Item Id">
+<input type="number" id="Scount"    placeholder="Item Quantity">
+
+<br><br>
+
+<button onclick="addProduct()">Add to Inventory</button>
 
 <h3>Products List</h3>
 <ul id="productList"></ul>
 
 <script>
+    function addProduct()
+    {
+        const product =
+            {
+                vId: parseInt(document.getElementById('vId').value),
+                Vname: document.getElementById('Vname').value,
+                Street: document.getElementById('Street').value,
+                City: document.getElementById('City').value,
+                StateAb: document.getElementById('StateAb').value,
+                ZipCode: document.getElementById('ZipCode').value,
+                iId: parseInt(document.getElementById('iId').value),
+                Iname: document.getElementById('Iname').value,
+                Sprice: parseFloat(document.getElementById('Sprice').value),
+                Category: document.getElementById('Category').value,
+                storeId: parseInt(document.getElementById('storeId').value),
+                iId_store: parseInt(document.getElementById('iId_store').value),
+                Scount: parseInt(document.getElementById('Scount').value),
+
+            };
+
+
+        fetch('/products',
+            {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(product)
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message || data.error))
+            .catch(err => console.error('Error:', err));
+
+    }
+
+
+
+
+    /*
     function fetchProducts()
     {
-        fetch('/prooducts')
+        fetch('/products')
             .then(response => response.json())
             .then(data => {
                 let productList = document.getElementById('productList');
@@ -33,14 +94,19 @@
                 });
             });
     }
+    */
 
+
+
+
+/*
     function addProduct()
     {
         let name = document.getElementById('name').value;
         let price = document.getElementById('price').value;
         let quantity = document.getElementById('quantity').value;
 
-        fetch('/prodcuts', {
+        fetch('/products', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({name,price,quantity})
@@ -49,11 +115,12 @@
 
     function deleteProduct(id)
     {
-        fetch(`/prodcuts/${id}`, {method: 'Delete'})
+        fetch(`/products/${id}`, {method: 'Delete'})
             .then(() => fetchProducts());
     }
 
     fetchProducts();
+ */
 
 </script>
 </body>

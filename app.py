@@ -1,19 +1,22 @@
 from flask import Flask, request, jsonify, render_template
-import mysql.connector
+import psycopg2
+import psycopg2.extras
 
-app = Flask(__name__, template_folder='templates') #define the templates folder
+#initialize Flask application
+app = Flask(__name__, template_folder='templates') #templates folder has front end code
 
-
+#PostgreSQL Database Configuration
 DB_CONFIG = {
-    'host': '',
-    'user': '',
+    'host': 'localhost',
+    'user': 'zubairrashaad',
     'password': '',
-    'database': '',
+    'dbname': 'ArlingtonOrganicMarket',
+    'port': 5432
 }
 
-
+#establishes database connection
 def get_db_connection():
-    return mysql.connector.connect(**DB_CONFIG)
+    return psycopg2.connect(**DB_CONFIG)
 
 #Home Route
 
@@ -25,21 +28,63 @@ def index():
 @app.route('/products', methods=['POST'])
 def add_product():
     data = request.json
-    conn = get_db_connection()
-    cursor = conn.curson()
-    cursor.execute("INSERT INTO products(name, price, quantity) VALUES (%s,%s,%s)",
-                   (data['name'],data['price'],data['quantity']))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': 'Product added successfully'}),201
+    print("Received data:", data)
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        try:
+        #add vendor
+            cursor.execute("INSERT INTO vendor(vId, Vname, Street, City, StateAb, ZipCode) VALUES (%s,%s,%s,%s,%s,%s)",
+                    (data['vId'],data['Vname'],data['Street'],data['City'],data['StateAb'],data['ZipCode']))
+            print("Vendor Added.")
+
+        except Exception as e:
+            print("Error inserting vendor:", e)
+        #insert item
+        try:
+            cursor.execute("INSERT INTO item(iId, Iname, Sprice, Category) VALUES (%s,%s,%s,%s)",
+                   (data['iId'],data['Iname'],data['Sprice'],data['Category']))
+            print("Item added.")
+        except Exception as e:
+            print("Error inserting item:", e)
+
+        #link vendor to item
+        try:
+            cursor.execute("INSERT INTO vendor_item(vId, iId) VALUES (%s,%s)",
+                   (data['vendorId'],data['itemId']))
+            print("Vendor-item link added.")
+        except Exception as e:
+            print("Error linking vendor to item:", e)
+
+        #update the store inventory
+        try:
+            cursor.execute("INSERT INTO store_item(sId, iId, Scount) VALUES (%s,%s,%s)",
+                       (data['storeId'],data['iId_store'],data['Scount']))
+
+            print("Inventory added.")
+        except Exception as e:
+            print("Error inserting inventory:", e)
+
+        conn.commit()
+        return jsonify({'message': 'Product added successfully'}),201
+
+    except Exception as e:
+        conn.rollback()
+        print("Fatal error", e)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
 
 
+'''
 #Read Products
-@app.route('/prodcuts',methods=['GET'])
+@app.route('/products',methods=['GET'])
 def get_product():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cursor.execute("SELECT * FROM products")
     products = cursor.fetchall()
     conn.close()
@@ -52,11 +97,11 @@ def update_product(id):
     data = request.json
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE products SET name=%s, price=%s, quanity=%s WHERE id=%s",
+    cursor.execute("UPDATE products SET name=%s, price=%s, quantity=%s WHERE id=%s",
                    (data['name'], data['price'], data['quantity'], id))
     conn.commit()
     conn.close()
     return jsonify({'message': 'Product updated successfully'})
-
+'''
 if __name__ == '__main__':
     app.run(debug=True)
