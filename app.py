@@ -94,6 +94,33 @@ def get_products():
     conn.close()
     return jsonify(products)
 
+@app.route('/products/<int:id>', methods=['PUT'])
+def update_price(id):
+
+    data = request.get_json()
+    new_price = data.get('new_price')
+
+    if new_price is None:
+        return jsonify({'message': 'Missing new price'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("UPDATE item SET Sprice = %s WHERE iId = %s",(new_price,id))
+
+        if(cursor.rowcount == 0):
+            return jsonify({'message': 'Item not found or price already updated'}), 404
+
+        conn.commit()
+        return jsonify({'message': f'Price updated to ${new_price} for item ID {id}'})
+    except Exception as e:
+        conn.rollback()
+        print("Error updating price:", e)
+        return jsonify({'message': 'Server error'}), 500
+    finally:
+        conn.close()
+
 
 
 '''
