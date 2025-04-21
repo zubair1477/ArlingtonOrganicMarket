@@ -53,7 +53,7 @@ def add_product():
         #link vendor to item
         try:
             cursor.execute("INSERT INTO vendor_item(vId, iId) VALUES (%s,%s)",
-                   (data['vendorId'],data['itemId']))
+                   (data['vId'],data['iId']))
             print("Vendor-item link added.")
         except Exception as e:
             print("Error linking vendor to item:", e)
@@ -76,6 +76,23 @@ def add_product():
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+
+@app.route('/products',methods=['GET'])
+def get_products():
+    store_id = request.args.get('store_id',type=int)
+    if not store_id:
+        return jsonify({'error': 'missing store id'}), 400
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor.execute(""" 
+        SELECT i.Iname AS name, i.Sprice AS price, si.Scount AS stock
+        FROM store_item si
+        JOIN item i ON si.iId = i.iId
+        WHERE si.sid = %s
+                   """, (store_id,))
+    products = cursor.fetchall()
+    conn.close()
+    return jsonify(products)
 
 
 
