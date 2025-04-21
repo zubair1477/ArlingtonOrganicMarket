@@ -68,7 +68,7 @@
 <button onclick="addProduct()">Add to Inventory</button>
 
 <br><br>
-<h3>Modify Inventory</h3>
+<h3>Update Inventory</h3>
 
 <input type="number" id="itemIdInput" placeholder="Item ID">
 <input type="number" step="0.01" id="newPriceInput" placeholder="New Price">
@@ -76,7 +76,11 @@
 
 <p id="priceUpdateMsg" style="display:none; font-style:italic;"></p>
 
+<h3>Remove from Inventory</h3>
+<input type="number" id="deleteItemId" placeholder="Item Id">
+<button onclick="removeItem()">Remove Item</button>
 
+<p id="deleteMsg" style="display: none; font-style: italic;"></p>
 
 <br><br>
 <h2>Available Products</h2>
@@ -231,21 +235,37 @@
             });
     }
 
+    function removeItem() {
+        const itemId = document.getElementById('deleteItemId').value;
+        const msg = document.getElementById('deleteMsg');
 
-
-
-
-    /*
-
-
-        function deleteProduct(id)
-        {
-            fetch(`/products/${id}`, {method: 'Delete'})
-                .then(() => fetchProducts());
+        if (!itemId) {
+            alert("Please enter an Item ID.");
+            return;
         }
 
-        fetchProducts();
-     */
+        fetch(`/products/${itemId}`, {
+            method: 'DELETE'
+        })
+            .then(response => response.json())
+            .then(data => {
+                msg.style.display = 'block';
+                msg.style.color = data.success ? 'green' : 'red';
+                msg.textContent = data.message;
+            })
+            .catch(error => {
+                console.error('Error deleting item:', error);
+                msg.style.display = 'block';
+                msg.style.color = 'red';
+                msg.textContent = 'Something went wrong while trying to delete the item.';
+            });
+    }
+
+
+
+
+
+
 
 </script>
 </body>

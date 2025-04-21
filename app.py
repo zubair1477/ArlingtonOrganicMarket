@@ -113,7 +113,7 @@ def update_price(id):
             return jsonify({'message': 'Item not found or price already updated'}), 404
 
         conn.commit()
-        return jsonify({'message': f'Price updated to ${new_price} for item ID {id}'})
+        return jsonify({'success': True,'message': f'Price updated to ${new_price} for item ID {id}'})
     except Exception as e:
         conn.rollback()
         print("Error updating price:", e)
@@ -121,31 +121,51 @@ def update_price(id):
     finally:
         conn.close()
 
+@app.route('/products/<int:id>',methods=['DELETE'])
+@app.route('/products/<int:id>', methods=['DELETE'])
+def delete_product(id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
 
-'''
-#Read Products
-@app.route('/products',methods=['GET'])
-def get_product():
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cursor.execute("SELECT * FROM products")
-    products = cursor.fetchall()
-    conn.close()
-    return jsonify(products)
+        cursor.execute("SELECT vId FROM vendor_item WHERE iId = %s", (id,))
+        vendor_result = cursor.fetchone()
+
+        if not vendor_result:
+            return jsonify({'success': False, 'message': 'Item not found or not linked to a vendor.'}), 404
+
+        vendor_id = vendor_result[0]
 
 
-#update product
-@app.route('/products/<int:id>', methods=['PUT'])
-def update_product(id):
-    data = request.json
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE products SET name=%s, price=%s, quantity=%s WHERE id=%s",
-                   (data['name'], data['price'], data['quantity'], id))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': 'Product updated successfully'})
-'''
+        cursor.execute("DELETE FROM store_item WHERE iId = %s", (id,))
+        print(f"Deleted item {id} from store_item")
+
+        cursor.execute("DELETE FROM vendor_item WHERE iId = %s", (id,))
+        print(f"Deleted item {id} from vendor_item")
+
+        cursor.execute("DELETE FROM item WHERE iId = %s", (id,))
+        print(f"Deleted item {id} from item table")
+
+        cursor.execute("SELECT COUNT(*) FROM vendor_item WHERE vId = %s", (vendor_id,))
+        count = cursor.fetchone()[0]
+        print(f"Vendor {vendor_id} now supplies {count} items")
+
+        if count == 0:
+            cursor.execute("DELETE FROM vendor WHERE vId = %s", (vendor_id,))
+            print(f"Vendor {vendor_id} deleted — they had no other items.")
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f'Item {id} and related data deleted successfully.'})
+
+    except Exception as e:
+        conn.rollback()
+        print("Error deleting item:", e)
+        return jsonify({'success': False, 'message': 'Error occurred during deletion.'}), 500
+
+    finally:
+        conn.close()
+
+
 if __name__ == '__main__':
     app.run(debug=True)
